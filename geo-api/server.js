@@ -5,7 +5,7 @@ const cors = require("cors");
 const app = express();
 const PORT = 8443;
 
-// Autoriser ton front (React en dev)
+// Autoriser ton front (React en dev ou prod)
 const allowedOrigins = [
   "http://localhost:3000",
   "http://192.168.1.190:3000",
@@ -25,13 +25,20 @@ app.use(
   })
 );
 
-// Fallback: get coordinates from GeoJS
+// Fallback: get coordinates from ip-api.com (plus précis que GeoJS)
 const getCoords = async () => {
   try {
-    const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+    const res = await fetch("http://ip-api.com/json/");
     const data = await res.json();
-    return { latitude: parseFloat(data.latitude), longitude: parseFloat(data.longitude) };
-  } catch {
+    return {
+      latitude: parseFloat(data.lat),
+      longitude: parseFloat(data.lon),
+      city: data.city,
+      region: data.regionName,
+      country: data.country,
+    };
+  } catch (err) {
+    console.error("IP geolocation failed:", err);
     return null;
   }
 };
@@ -52,11 +59,19 @@ const reverseGeocode = async (lat, lon) => {
 
 // API endpoint
 app.get("/", async (req, res) => {
-  let coords = await getCoords();
+  const coords = await getCoords();
   if (!coords) return res.status(500).json({ error: "Cannot get coordinates" });
 
   const address = await reverseGeocode(coords.latitude, coords.longitude);
-  res.json({ latitude: coords.latitude, longitude: coords.longitude, address });
+
+  res.json({
+    latitude: coords.latitude,
+    longitude: coords.longitude,
+    fallbackCity: coords.city,
+    fallbackRegion: coords.region,
+    fallbackCountry: coords.country,
+    address, // si reverse geocode fonctionne
+  });
 });
 
 app.listen(PORT, "0.0.0.0", () => {
