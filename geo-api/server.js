@@ -1,15 +1,29 @@
 const express = require("express");
 const fetch = require("node-fetch");
-const cors = require("cors"); // ✅ add CORS
+const cors = require("cors");
 
 const app = express();
 const PORT = 8443;
 
-// ✅ Enable CORS for all requests
-app.use(cors());
+// Autoriser ton front (React en dev)
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://192.168.1.190:3000",
+  "https://timserck.duckdns.org"
+];
 
-// (Optional, production: restrict to your domain only)
-app.use(cors({ origin: "https://timserck.duckdns.org" }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // curl / scripts
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 // Fallback: get coordinates from GeoJS
 const getCoords = async () => {
@@ -22,10 +36,12 @@ const getCoords = async () => {
   }
 };
 
-// Reverse geocode using local Nominatim
+// Reverse geocode using Nominatim public API
 const reverseGeocode = async (lat, lon) => {
   try {
-    const res = await fetch(`http://nominatim:8080/reverse?format=json&lat=${lat}&lon=${lon}`);
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+    );
     const data = await res.json();
     return data.display_name;
   } catch (err) {
@@ -35,7 +51,7 @@ const reverseGeocode = async (lat, lon) => {
 };
 
 // API endpoint
-app.get("/location", async (req, res) => {
+app.get("/", async (req, res) => {
   let coords = await getCoords();
   if (!coords) return res.status(500).json({ error: "Cannot get coordinates" });
 
@@ -44,5 +60,5 @@ app.get("/location", async (req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Geo API running at http://localhost:${PORT}`);
+  console.log(`🌍 Geo API running at http://localhost:${PORT}`);
 });
