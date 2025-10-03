@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  nominatim:
+    image: mediagis/nominatim:4.1
+    container_name: nominatim
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NOMINATIM_PASSWORD: "password"
+      NOMINATIM_USERNAME: "admin"
+    volumes:
+      - nominatim-data:/var/lib/postgresql/12/main
+      - ./osm-data:/var/lib/postgresql/12/nominatim-import
+
+  geo-api:
+    build: ./geo-api
+    container_name: geo-api
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+    depends_on:
+      - nominatim
+
+volumes:
+  nominatim-data:
