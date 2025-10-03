@@ -3,8 +3,8 @@ version: "3.9"
 services:
   nominatim:
     image: mediagis/nominatim:4.1
+    platform: linux/amd64
     container_name: nominatim
-    restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
