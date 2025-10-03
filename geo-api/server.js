@@ -1,8 +1,15 @@
 const express = require("express");
 const fetch = require("node-fetch");
+const cors = require("cors"); // ✅ add CORS
 
 const app = express();
 const PORT = 8443;
+
+// ✅ Enable CORS for all requests
+app.use(cors());
+
+// (Optional, production: restrict to your domain only)
+// app.use(cors({ origin: "https://timserck.duckdns.org" }));
 
 // Fallback: get coordinates from GeoJS
 const getCoords = async () => {
