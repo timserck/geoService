@@ -5,7 +5,7 @@ const cors = require("cors");
 const app = express();
 const PORT = 8443;
 
-// Autoriser ton front (React dev ou prod)
+// Autoriser ton front (React en dev ou prod)
 const allowedOrigins = [
   "http://localhost:3000",
   "http://192.168.1.190:3000",
@@ -25,17 +25,16 @@ app.use(
   })
 );
 
-// Fallback: get coordinates from ipinfo.io (gratuit, plus précis)
+// Fallback: get coordinates from ip-api.com (plus précis que GeoJS)
 const getCoords = async () => {
   try {
-    const res = await fetch("https://ipinfo.io/json?token=TON_TOKEN"); // Remplace TON_TOKEN par ton token gratuit
+    const res = await fetch("http://ip-api.com/json/");
     const data = await res.json();
-    const [lat, lon] = data.loc.split(",");
     return {
-      latitude: parseFloat(lat),
-      longitude: parseFloat(lon),
+      latitude: parseFloat(data.lat),
+      longitude: parseFloat(data.lon),
       city: data.city,
-      region: data.region,
+      region: data.regionName,
       country: data.country,
     };
   } catch (err) {
@@ -76,5 +75,5 @@ app.get("/", async (req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🌍 Geo API running at https://localhost:${PORT}`);
+  console.log(`🌍 Geo API running at http://localhost:${PORT}`);
 });
